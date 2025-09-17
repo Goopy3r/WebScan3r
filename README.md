@@ -1,43 +1,158 @@
 # WebScan3r
 
-Advanced Web Security Scanner is a comprehensive, multi-threaded web application security scanner written in Python. It performs automated security testing against web applications to identify common vulnerabilities and security misconfigurations.
+> **Advanced Web Security Scanner** — a multi-threaded Python tool for automated security testing of web applications. Use only on targets you own or are explicitly authorized to test.
+
+---
+
+## Table of contents
+
+* [Overview](#overview)
+* [Features](#features)
+* [Vulnerability detection capabilities](#vulnerability-detection-capabilities)
+* [Prerequisites](#prerequisites)
+* [Installation](#installation)
+* [Usage](#usage)
+* [Wordlists and setup](#wordlists-and-setup)
+* [Configuration](#configuration)
+* [Important notes & legal](#important-notes--legal)
+
+---
+
+## Overview
+
+WebScan3r is a performant, extensible web application security scanner written in Python. It combines intelligent crawling, active tests, and optional WFuzz integration to find common web vulnerabilities and misconfigurations.
 
 ## Features
-1. **Multi-threaded Scanning**: High-performance scanning with configurable thread counts
 
-2. **Comprehensive Vulnerability Detection**: Tests for numerous web application vulnerabilities
+* **Multi-threaded scanning** with configurable thread count for high throughput.
+* **Comprehensive vulnerability tests** for many common web issues.
+* **Intelligent crawling** to discover endpoints and parameters automatically.
+* **WFuzz integration** (optional) for directory brute-forcing and pattern-based fuzzing.
+* **JSON reporting** for machine-readable results.
 
-3. **Intelligent Crawling**: Discovers and tests application endpoints automatically
+## Vulnerability detection capabilities
 
-4. **WFuzz Integration**: Leverages the popular wfuzz tool for directory brute-forcing when available
+WebScan3r includes tests or checks for (non-exhaustive):
 
-5. **Detailed Reporting**: Generates JSON reports with vulnerability findings
+* SQL Injection (SQLi)
+* Cross-Site Scripting (XSS)
+* Security header analysis (missing/misconfigured headers)
+* CSRF protection checks (forms without tokens)
+* CORS misconfigurations
+* Local & Remote File Inclusion (LFI/RFI)
+* Command injection
+* XXE (XML External Entity) issues
+* SSRF (Server-Side Request Forgery)
+* Open redirects
+* Common API issues (BOLA, sensitive data exposure, etc.)
+* Information disclosure (sensitive data in responses)
+* Dangerous HTTP methods (TRACE, PUT, DELETE)
 
-## Vulnerability Detection Capabilities
-**The scanner tests for a wide range of security issues including**
+## Prerequisites
 
-SQL Injection (SQLi): Tests for various SQL injection vectors
+### System
 
-Cross-Site Scripting (XSS): Detects reflected XSS vulnerabilities
+* Python **3.7+**
+* Linux, macOS, or Windows
+* Internet connection (for external tests or WFuzz)
+* Sufficient RAM/CPU for multi-threaded scanning
 
-Security Header Analysis: Checks for missing or misconfigured security headers
+### Python packages
 
-CSRF Protection: Identifies forms without proper CSRF protection
+Install runtime dependencies:
 
-CORS Misconfigurations: Tests for insecure CORS configurations
+```bash
+pip install requests beautifulsoup4 aiohttp colorama
+```
 
-File Inclusion: Local and remote file inclusion vulnerabilities
+### Optional (WFuzz)
 
-Command Injection: OS command injection vulnerabilities
+WFuzz improves directory/parameter fuzzing when available.
 
-XXE Injection: XML External Entity processing vulnerabilities
+```bash
+# Kali / Debian-based
+sudo apt install wfuzz
 
-SSRF: Server-Side Request Forgery vulnerabilities
+# Alternative (limited):
+pip install wfuzz
+```
 
-Open Redirects: Unsafe redirects that could facilitate phishing
+## Installation
 
-API Security: Tests for common API vulnerabilities (BOLA, data exposure, etc.)
+1. Save the scanner script as `web_scanner.py` in a working directory.
+2. Make the script executable (Linux/macOS):
 
-Information Disclosure: Sensitive data exposure in responses
+```bash
+chmod +x web_scanner.py
+```
 
-HTTP Method Testing: Dangerous HTTP methods (TRACE, PUT, DELETE)
+## Usage
+
+Basic scan:
+
+```bash
+python web_scanner.py https://example.com
+```
+
+Verbose output:
+
+```bash
+python web_scanner.py https://example.com -v
+```
+
+Aggressive (more tests):
+
+```bash
+python web_scanner.py https://example.com -a
+```
+
+Verbose + Aggressive:
+
+```bash
+python web_scanner.py https://example.com -v -a
+```
+
+WFuzz pattern support — if your target URL contains `/FUZZ/` the scanner will use WFuzz when available:
+
+```bash
+python web_scanner.py https://example.com/FUZZ/
+```
+
+Display help:
+
+```bash
+python web_scanner.py --help
+```
+
+## Wordlists and setup
+
+Place the following wordlists in the same directory as the script (or update configuration paths):
+
+* `raft-small-directories-lowercase.txt` — directory wordlist (common directories)
+* `hugeSQL.txt` — SQL injection payloads
+* `xss-payload-list.txt` — XSS payloads
+* `common-params.txt` — common parameter names (e.g. `id,page,view,file,search`)
+
+Sources: SecLists ([https://github.com/danielmiessler/SecLists](https://github.com/danielmiessler/SecLists)) or your preferred collections.
+
+## Configuration
+
+* Default thread count: **500** (may be high for some systems). Reduce in the `CONFIG` section of the script if needed.
+* Reporting: JSON output stored to `reports/` by default (adjustable).
+* Timeouts, user-agent, and rate limits can be configured in the script config block.
+
+## Important notes & legal
+
+* **Authorization:** Only scan web applications you own or have explicit written permission to test. Unauthorized scanning can be illegal.
+* **Performance:** High thread counts may consume large CPU/RAM and generate significant network traffic. Tune settings for your environment and the target.
+* **False positives/negatives:** Automated scanners can be noisy and incomplete — manually validate findings before taking action.
+
+---
+
+If you want, I can:
+
+* produce a downloadable `README.md` file,
+* generate a shorter one-page quickstart, or
+* convert this into a `README.md` plus a sample `config.ini`.
+
+Tell me which and I’ll add it.

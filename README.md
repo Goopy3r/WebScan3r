@@ -148,11 +148,3 @@ Sources: SecLists ([https://github.com/danielmiessler/SecLists](https://github.c
 * **False positives/negatives:** Automated scanners can be noisy and incomplete — manually validate findings before taking action.
 
 ---
-
-If you want, I can:
-
-* produce a downloadable `README.md` file,
-* generate a shorter one-page quickstart, or
-* convert this into a `README.md` plus a sample `config.ini`.
-
-Tell me which and I’ll add it.

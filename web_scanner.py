@@ -341,23 +341,14 @@ class WebScanner:
         if not os.path.exists(wordlist):
             self.print_status(f"Directory wordlist not found at {wordlist}", "error")
             self.print_status("Using built-in common directories instead", "info")
-            wordlist = None
+            wordlist = "directories.txt"
         
-        if wordlist:
-            command = [
-                "wfuzz",
-                "-w", wordlist,
-                "--hc", "404,403",
-                target_url
-            ]
-        else:
-            # Use built-in wordlist
-            command = [
-                "wfuzz",
-                "-z", "file,txt/directories.txt",
-                "--hc", "404,403",
-                target_url
-            ]
+        command = [
+            "wfuzz",
+            "-w", wordlist,
+            "--hc", "404,403",
+            target_url
+        ]
         
         try:
             self.print_status(f"Running command: {' '.join(command)}", "debug")
@@ -368,36 +359,15 @@ class WebScanner:
             )
             
             # Print WFuzz output in real-time
-            print("\n" + "="*100)
-            print(f"{'URL':<60}{'Response':<12}{'Size':<10}{'Title':<30}")
-            print("="*100)
-            
             while True:
                 line = await process.stdout.readline()
                 if not line:
                     break
-                line_str = line.decode().strip()
-                
-                # Parse WFuzz output to extract URLs and prevent duplicates
-                if any(x in line_str for x in ["200", "301", "302", "403"]):
-                    parts = line_str.split()
-                    if len(parts) >= 5:
-                        try:
-                            status_code = parts[1]
-                            found_dir = parts[4]
-                            full_url = f"{url.replace('/FUZZ/', '')}/{found_dir}"
-                            
-                            # Skip if already seen
-                            if found_dir not in self.seen_directories:
-                                self.seen_directories.add(found_dir)
-                                print(f"{full_url:<60}{Fore.GREEN}{status_code:<12}{Style.RESET_ALL}{'N/A':<10}{'WFuzz Discovery':<30}")
-                        except (IndexError, ValueError):
-                            continue
+                print(line.decode().strip())
             
             await process.wait()
-            print("="*100)
             self.print_status("WFuzz scan completed", "success")
-            sys.exit(0)
+            sys.exit(0)  # This exits the entire script
                 
         except Exception as e:
             self.print_status(f"WFuzz error: {str(e)}", "error")
@@ -1522,3 +1492,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

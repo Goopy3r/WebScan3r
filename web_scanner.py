@@ -103,8 +103,8 @@ class WebScanner:
         try:
             async with self.semaphore:
                 async with self.aiohttp_session.request(
-                    method, 
-                    url, 
+                    method,
+                    url,
                     **kwargs
                 ) as response:
                     text = await response.text()
@@ -118,10 +118,10 @@ class WebScanner:
             if self.verbose:
                 self.print_status(f"Request error: {e}", "error")
             return None
-        
+
     def scan(self, url):
         print(CONFIG["BANNER"])
-        
+
         # Normalize the URL - add https:// if no scheme is provided
         normalized_url = self.normalize_url(url)
         self.print_status(f"Starting scan for: {normalized_url}", "info")
@@ -132,10 +132,11 @@ class WebScanner:
 
         # Check if URL contains /FUZZ/ and only run WFuzz if it does
         if "/FUZZ/" in normalized_url.upper():
-            self.print_status("FUZZ pattern detected, running WFuzz only", "info")
+            self.print_status(
+                "FUZZ pattern detected, running WFuzz only", "info")
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             try:
                 loop.run_until_complete(self.run_wfuzz_only(normalized_url))
             except KeyboardInterrupt:
@@ -175,14 +176,16 @@ class WebScanner:
             # Try https first, fall back to http if https fails
             https_url = f"https://{url}"
             http_url = f"http://{url}"
-            
+
             # Test which protocol works
             try:
-                response = requests.head(https_url, timeout=5, allow_redirects=True, verify=False)
+                response = requests.head(
+                    https_url, timeout=5, allow_redirects=True, verify=False)
                 return https_url
             except:
                 try:
-                    response = requests.head(http_url, timeout=5, allow_redirects=True, verify=False)
+                    response = requests.head(
+                        http_url, timeout=5, allow_redirects=True, verify=False)
                     return http_url
                 except:
                     # If both fail, default to https
@@ -256,7 +259,7 @@ class WebScanner:
 
             if not response:
                 return
-                
+
             content_type = response['headers'].get('Content-Type', '')
             if 'text/html' not in content_type:
                 return
@@ -336,20 +339,22 @@ class WebScanner:
         """Run only WFuzz when FUZZ pattern is detected in URL"""
         # Keep the original URL with /FUZZ/ intact
         target_url = url
-        
+
         wordlist = CONFIG["WORDLIST"]["DIRECTORY"]
         if not os.path.exists(wordlist):
-            self.print_status(f"Directory wordlist not found at {wordlist}", "error")
-            self.print_status("Using built-in common directories instead", "info")
+            self.print_status(
+                f"Directory wordlist not found at {wordlist}", "error")
+            self.print_status(
+                "Using built-in common directories instead", "info")
             wordlist = "directories.txt"
-        
+
         command = [
             "wfuzz",
             "-w", wordlist,
             "--hc", "404,403",
             target_url
         ]
-        
+
         try:
             self.print_status(f"Running command: {' '.join(command)}", "debug")
             process = await asyncio.create_subprocess_exec(
@@ -357,18 +362,18 @@ class WebScanner:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            
+
             # Print WFuzz output in real-time
             while True:
                 line = await process.stdout.readline()
                 if not line:
                     break
                 print(line.decode().strip())
-            
+
             await process.wait()
             self.print_status("WFuzz scan completed", "success")
             sys.exit(0)  # This exits the entire script
-                
+
         except Exception as e:
             self.print_status(f"WFuzz error: {str(e)}", "error")
             self.print_status("Falling back to Python brute forcer...", "info")
@@ -383,52 +388,56 @@ class WebScanner:
             self.print_status("Using Python for directory bruteforce", "info")
             parsed = urlparse(url)
             base_url = f"{parsed.scheme}://{parsed.netloc}"
-            wordlist = CONFIG["WORDLIST"]["DIRECTORY"] if os.path.exists(CONFIG["WORDLIST"]["DIRECTORY"]) else None
+            wordlist = CONFIG["WORDLIST"]["DIRECTORY"] if os.path.exists(
+                CONFIG["WORDLIST"]["DIRECTORY"]) else None
             await self.run_python_bruteforce(base_url, wordlist)
 
     async def run_wfuzz_scan(self, url):
         """Run WFuzz as part of the full scan process"""
         parsed = urlparse(url)
         base_url = f"{parsed.scheme}://{parsed.netloc}"
-        
+
         wordlist = CONFIG["WORDLIST"]["DIRECTORY"]
         if not os.path.exists(wordlist):
-            self.print_status(f"Directory wordlist not found at {wordlist}", "error")
-            self.print_status("Using built-in common directories instead", "info")
+            self.print_status(
+                f"Directory wordlist not found at {wordlist}", "error")
+            self.print_status(
+                "Using built-in common directories instead", "info")
             wordlist = None
-        
+
         # Create a URL with FUZZ at the end
         target_url = f"{base_url}/FUZZ/"
-        
+
         command = [
             "wfuzz",
             "-w", wordlist if wordlist else "directories.txt",
             "--hc", "404,403",
             target_url
         ]
-        
+
         try:
-            self.print_status(f"Running WFuzz scan: {' '.join(command)}", "info")
+            self.print_status(
+                f"Running WFuzz scan: {' '.join(command)}", "info")
             process = await asyncio.create_subprocess_exec(
                 *command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            
+
             # Print WFuzz output in real-time
             while True:
                 line = await process.stdout.readline()
                 if not line:
                     break
                 print(line.decode().strip())
-            
+
             await process.wait()
             self.print_status("WFuzz scan completed", "success")
         except Exception as e:
             self.print_status(f"WFuzz scan error: {str(e)}", "error")
             self.print_status("Falling back to Python brute forcer...", "info")
             await self.run_python_bruteforce(base_url, wordlist)
-            
+
             await process.wait()
             print("="*100)
             self.print_status("WFuzz scan completed", "success")
@@ -460,12 +469,12 @@ class WebScanner:
             nonlocal found_results
             try:
                 test_url = f"{base_url}/{directory}"
-                
+
                 # Skip if already scanned
                 if directory in self.seen_directories:
                     return
                 self.seen_directories.add(directory)
-                
+
                 await asyncio.sleep(random.uniform(0, CONFIG["DELAY"]))
                 headers = {"User-Agent": self.random_user_agent()}
                 response = await self.async_request('GET', test_url, headers=headers, timeout=CONFIG["TIMEOUT"])
@@ -1368,7 +1377,7 @@ class WebScanner:
                 response = await self.async_request('POST', url, json=test_data, timeout=CONFIG["TIMEOUT"])
             except:
                 return False
-                
+
             if response and response['status'] == 200:
                 try:
                     resp_data = json.loads(response['text'])
@@ -1471,6 +1480,7 @@ class WebScanner:
             print(f"Evidence: {vuln.get('evidence', 'N/A')}")
             print("-"*100)
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Advanced Web Security Scanner")
@@ -1492,4 +1502,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

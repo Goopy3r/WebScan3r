@@ -17,7 +17,6 @@ import socket
 import asyncio
 import aiohttp
 from functools import partial
-# poopy
 
 # Initialize colorama
 init(autoreset=True)

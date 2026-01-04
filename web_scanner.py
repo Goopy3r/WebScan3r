@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 import socket
 import asyncio
 import aiohttp
-from functools import partial
+
 
 # Initialize colorama
 init(autoreset=True)

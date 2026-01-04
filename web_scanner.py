@@ -17,6 +17,7 @@ import socket
 import asyncio
 import aiohttp
 from functools import partial
+# Disable SSL warnings
 
 # Initialize colorama
 init(autoreset=True)
